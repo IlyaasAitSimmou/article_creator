@@ -1,0 +1,7 @@
+textarea {
+    min-height: 400px;
+}
+
+.email:hover {
+    color: rgb(181, 181, 181);
+}

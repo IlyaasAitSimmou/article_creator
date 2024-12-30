@@ -1,0 +1,31 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>{% block title %}Mail{% endblock %}</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <link rel="stylesheet" href="static webapp/css/style.css">
+        {% block script %}
+        
+        {% endblock %}
+    </head>
+    <body>
+        <div class="navbar">
+            <ul>
+                <li><a href="{% url 'index' %}">Dashboard</a></li>
+                {% if user.is_authenticated %}
+                    <li><a href="{% url 'logout' %}">Logout</a></li>
+                    <!-- <li><a href="% url 'settings' %">Articles</a></li> -->
+                    <li><a href="{% url 'create_article' %}">Create Article</a></li>
+                {% else %}
+                    <li><a href="{% url 'signup' %}">Sign In</a></li>
+                {% endif %}
+            </ul>
+        </div>
+        <div class="container">
+            {% block body %}
+            {% endblock %}
+        </div>
+    </body>
+</html>

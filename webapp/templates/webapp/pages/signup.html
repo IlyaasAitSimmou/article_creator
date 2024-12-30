@@ -1,0 +1,56 @@
+{% extends "webapp/layout.html" %}
+{% load static %}
+
+{% block script %}
+<script src="{% static 'auth.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+
+
+    {% if message %}
+        <div>{{ message }}</div>
+    {% endif %}
+
+    <form id="LoginForm" action="{% url 'login' %}" method="post">
+        <h2>Login</h2>
+        {% csrf_token %}
+        <div class="form-group">
+            <input autofocus class="form-control" type="text" name="username" placeholder="Username">
+        </div>
+        <div class="form-group">
+            <input class="form-control" type="password" name="password" placeholder="Password">
+        </div>
+        <input class="btn btn-primary" type="submit" value="Login">
+    </form>
+
+    <div >
+        Don't have an account? <button id="SignUpLink">Register here.</button>
+    </div>
+
+
+    <form id="signUpForm" action="{% url 'signup' %}" method="post">
+        <h2>Sign Up</h2>
+        {% csrf_token %}
+        <div class="form-group">
+            <input autofocus class="form-control" type="text" name="username" placeholder="Username">
+        </div>
+        <div class="form-group">
+            <input autofocus class="form-control" type="email" name="email" placeholder="Email">
+        </div>
+        <div class="form-group">
+            <input class="form-control" type="password" name="password" placeholder="Password">
+        </div>
+        <div class="form-group">
+            <input class="form-control" type="password" name="confirm_password" placeholder="Conform Password">
+        </div>
+        <input class="btn btn-primary" type="submit" value="Sign Up">
+    </form>
+
+    <div>
+        Already have an account? <button id="LoginLink" >Register here.</button>
+    </div>
+
+{% endblock %}
+
+<!-- href="% url 'login' %"    href="% url 'signup' %"-->

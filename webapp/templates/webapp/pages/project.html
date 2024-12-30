@@ -1,0 +1,74 @@
+{% extends "webapp/layout.html" %}
+{% load static %}
+{% block script %}
+    <script src="{% static 'project.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+    {% if user.is_authenticated %}
+        <div class="project">
+            
+            <h1>{{ project.name }}</h1>
+        </div>
+        
+                <div class="articles_list">
+                    {% for article in articles %}
+                        <div class="article">
+                            <h2>{{ article.title }}</h2>
+                            {% if article.Image %}
+                                <img src="{{ article.image_base64 }}" alt="Article Image">
+                            {% endif %}
+                            <div class="article-description">
+                                {{ article.description|safe }}
+                            </div>
+                            <div class="creation_date">
+                                Date Created: {{ article.creation_date }}
+                            </div>
+                            <a href="{% url 'view_article' article.title %}">View Article</a>
+                            <div class="article-footer">
+                                <button class="editArticleButton">Edit</button>
+                                <button class="deleteArticleButton">Delete</button>
+
+                                <form action="{% url 'edit_article' article.title %}" method="POST" class="editArticleForm">
+                                    {% csrf_token %}
+                                    <label for="title">Title:</label>
+                                    <input type="text" name="title" id="title" value="{{ article.title }}" required><br>
+                                    <label for="html_file">Change HTML (Leave empty if file is to remain the same):</label>
+                                    <input type="file" name="html_file" id="html_file" accept=".html" value="{{ article.file }}"><br>
+                                    <label for="content">Change Content (If no file):</label>
+                                    <textarea name="content" id="content">{{ article.content }}</textarea><br>
+                                    <label for="description" id="description">Description (optional)</label>
+                                    <textarea name="description" id="description">{{ article.description }}</textarea><br>
+                                    <label for="image">Change Thumbnail Image (optional):</label>
+                                    <input type="file" name="image" id="image" accept=".jpg,.png"><br>
+                                    <label for="keep_image">Keep Image?</label>
+                                    <select name="keep_image" id="keep_image">
+                                        <option value="No">No</option>
+                                        <option value="Yes" selected>Yes</option>
+                                    </select>
+                                    <label for="project">Project(s)</label>
+                                    {% for project in projects %}
+                                        {% if project in article.projects.all %}
+                                            <input type="checkbox" id="{{project.name}}" name="{{project.name}}" value="{{project.name}}" checked>
+                                            <label for="{{project.name}}"> {{project.name}}</label><br>
+                                        {% else %}
+                                        <input type="checkbox" id="{{project.name}}" name="{{project.name}}" value="{{project.name}}">
+                                        <label for="{{project.name}}"> {{project.name}}</label><br>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <button type="submit" class="button">Save Changes</button>
+                                </form>
+                                <form action="{% url 'delete_article' article.title %}" class="deleteArticleForm">
+                                    {% csrf_token %}
+                                    <button class="cancel_article_delete button" type="button">No</button>
+                                    <button type="submit" class="button">Yes</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+        
+        </div>
+    </div>
+        {% endif %}
+{% endblock %}
