@@ -1,0 +1,176 @@
+{% extends "webapp/layout.html" %}
+{% load static %}
+{% block script %}
+    <script src="{% static 'articles.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+
+    <div>
+        <!-- <h1>hello</h1> -->
+        {% if user.is_authenticated %}   
+            <button id="createProjectButton">New Project</button><button id="createArticleButton">New Article</button>
+
+            <!-- CREATE PROJECT -->
+            <div id="projectForm">
+                <form method="post" enctype="multipart/form-data" action="{% url 'create_project' %}">
+                    {% csrf_token %}
+                    <label for="name">Name:</label>
+                    <input type="text" name="name" id="name" required><br>
+                    <label for="description">Description:</label>
+                    <textarea name="description" id="description"></textarea><br>
+                    <label for="image">Upload Image (Optional):</label>
+                    <input type="file" name="image" id="image" accept=".jpg,.png"><br>
+                    <label for="themes">Themes (separate by commas):</label>
+                    <textarea name="themes" id="themes" placeholder="Enter themes separated by commas"></textarea><br>
+                    <button type="submit">Submit</button>
+                </form>
+            </div>
+
+            <!-- CREATE ARTICLE -->
+            <div id="articleForm">
+                <form action="{% url 'create_article' %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <label for="title">Title:</label>
+                    <input type="text" name="title" id="title" required><br>
+                    <label for="html_file">Upload HTML File:</label>
+                    <input type="file" name="html_file" id="html_file" accept=".html" required><br>
+                    <label for="content">Content (If no file):</label>
+                    <textarea name="content" id="content"></textarea><br>
+                    <label for="description" id="description">Description (optional)</label>
+                    <textarea name="description" id="description"></textarea><br>
+                    <label for="image">Upload Thumbnail Image (optional):</label>
+                    <input type="file" name="image" id="image" accept=".jpg,.png"><br>
+                    <label for="project">Project(s)</label>
+                    {% for project in projects %}
+                        <input type="checkbox" id="{{project.name}}" name="{{project.name}}" value="{{project.name}}">
+                        <label for="{{project.name}}"> {{project.name}}</label><br>
+                    {% endfor %}
+
+                    <button type="submit">Submit</button>
+                </form>
+            
+                {% if message %}
+                    <div>{{ message }}</div>
+                {% endif %}
+            </div>
+
+
+            <!-- PROJECTS AND ARTICLES DISPLAY -->
+            <div class="projects_list">
+                <h1>Projects</h1>
+                {% for project in projects %}
+                    <div class="project">
+                        <h2>{{ project.name }}</h2>
+                        {% if project.image %}
+                            <img src="{{ project.image_base64 }}" alt="Article Image">
+                        {% endif %}
+                        <div class="project-description">
+                            {{ project.description|safe }}
+                        </div>
+                        <div>
+                            <h3>Themes:</h3>
+                            <ul>
+                                {% for theme in project.projectSubThemes %}
+                                    <li>{{ theme }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <a href="{% url 'project' project.name %}">View Project</a>
+                        <div class="project-footer">
+                            <button class="editProjectButton">Edit</button>
+                            <button class="deleteProjectButton">Delete</button>
+
+                            <form action="{% url 'edit_project' project.name %}" class="editProjectForm" method="post">
+                                {% csrf_token %}
+                                <label for="name">Name:</label>
+                                <input type="text" name="name" id="name" value="{{ project.name }}" required><br>
+                                <label for="description">Description:</label>
+                                <textarea name="description" id="description" required>{{ project.description }}</textarea><br>
+                                <label for="image">Change Image (Optional):</label>
+                                <input type="file" name="image" id="image" accept=".jpg,.png"><br>
+                                <label for="keep_image">Keep Image?</label>
+                                <select name="keep_image" id="keep_image">
+                                    <option value="No">No</option>
+                                    <option value="Yes" selected>Yes</option>
+                                </select>
+                                <label for="themes">Themes (separate by commas):</label>
+                                <textarea name="themes" id="themes" placeholder="Enter themes separated by commas">{{ project.projectSubThemes }}</textarea><br>
+                                <button type="submit">Save Changes</button>
+                            </form>
+                            <form action="{% url 'delete_project' project.name %}" class="deleteProjectForm">
+                                {% csrf_token %}
+                                <button class="cancel_project_delete button" type="button">No</button>
+                                <button type="submit" class="button">Yes</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+    
+            <div class="articles_list">
+                <h1>Articles</h1>
+                {% for article in articles %}
+                    {% if not article.projects.exists %}
+                    <div class="article">
+                        <h2>{{ article.title }}</h2>
+                        {% if article.Image %}
+                            <img src="{{ article.image_base64 }}" alt="Article Image">
+                        {% endif %}
+                        <div class="article-description">
+                            {{ article.description|safe }}
+                        </div>
+                        <div class="creation_date">
+                            Date Created: {{ article.creation_date }}
+                        </div>
+                        <a href="{% url 'view_article' article.title %}">View Article</a>
+                        <div class="article-footer">
+                            <button class="editArticleButton">Edit</button>
+                            <button class="deleteArticleButton">Delete</button>
+
+                            <form action="{% url 'edit_article' article.title %}" method="POST" class="editArticleForm">
+                                {% csrf_token %}
+                                <label for="title">Title:</label>
+                                <input type="text" name="title" id="title" value="{{ article.title }}" required><br>
+                                <label for="html_file">Change HTML (Leave empty if file is to remain the same):</label>
+                                <input type="file" name="html_file" id="html_file" accept=".html" value="{{ article.file }}"><br>
+                                <label for="content">Change Content (If no file):</label>
+                                <textarea name="content" id="content">{{ article.content }}</textarea><br>
+                                <label for="description" id="description">Description (optional)</label>
+                                <textarea name="description" id="description">{{ article.description }}</textarea><br>
+                                <label for="image">Change Thumbnail Image (optional):</label>
+                                <input type="file" name="image" id="image" accept=".jpg,.png"><br>
+                                <label for="keep_image">Keep Image?</label>
+                                <select name="keep_image" id="keep_image">
+                                    <option value="No">No</option>
+                                    <option value="Yes" selected>Yes</option>
+                                </select>
+                                <label for="project">Project(s)</label>
+                                {% for project in projects %}
+                                    {% if project in article.projects.all %}
+                                        <input type="checkbox" id="{{project.name}}" name="{{project.name}}" value="{{project.name}}" checked>
+                                        <label for="{{project.name}}"> {{project.name}}</label><br>
+                                    {% else %}
+                                    <input type="checkbox" id="{{project.name}}" name="{{project.name}}" value="{{project.name}}">
+                                    <label for="{{project.name}}"> {{project.name}}</label><br>
+                                    {% endif %}
+                                {% endfor %}
+                                <button type="submit" class="button">Save Changes</button>
+                            </form>
+                            <form action="{% url 'delete_article' article.title %}" class="deleteArticleForm">
+                                {% csrf_token %}
+                                <button class="cancel_article_delete button" type="button">No</button>
+                                <button type="submit" class="button">Yes</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <h2>Welcome Guest</h2>
+        {% endif %}
+    </div>
+
+{% endblock %}
