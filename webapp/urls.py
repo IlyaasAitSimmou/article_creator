@@ -14,6 +14,8 @@ urlpatterns = [
     path("login/", views.login_view, name="login"),
     path("logout/", views.logout_view, name="logout"),
     path("signup/", views.signup_view, name="signup"),
+    path("forgot_password/", views.forgot_password_view, name="forgot_password"),
+    path("password_reset/<str:access_code>/", views.password_reset_view, name="password_reset"),
     # path("articles/", views.articles, name="articles"),
     path("verify_email/<str:VerificationCode>/", views.verify_email, name="verify_email"),
 
@@ -27,4 +29,11 @@ urlpatterns = [
 
     path("view_article/<str:article_name>/", views.view_article, name="view_article"),
     path("project/<str:project_name>", views.view_project, name="project"),
+    path('password_confirmation/', views.password_confirmation_view, name='password_confirmation'),
+    path('settings', views.account_settings_view, name='account_settings'),
+    
+    path('api/fetch-articles/', views.fetch_articles, name='fetch_articles'),
+    path('api/fetch-project-articles/', views.fetch_project_articles, name='fetch_projects_articles'),
+    path('api/fetch-article/', views.fetch_view_article, name='fetch_article'),
+
 ]

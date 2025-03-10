@@ -18,6 +18,7 @@
                     <li><a href="{% url 'logout' %}">Logout</a></li>
                     <!-- <li><a href="% url 'settings' %">Articles</a></li> -->
                     <li><a href="{% url 'create_article' %}">Create Article</a></li>
+                    <li><a href="{% url 'password_confirmation' %}">Account Settings</a></li>
                 {% else %}
                     <li><a href="{% url 'signup' %}">Sign In</a></li>
                 {% endif %}

@@ -1,11 +1,95 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from .models import User, Article, Project
 import secrets
 from django.core.mail import send_mail
 from article_creator.settings import EMAIL_HOST_USER, ALLOWED_HOSTS, EMAIL_HOST_PASSWORD
 import base64
+from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+from .forms import PasswordConfirmationForm
+from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.hashers import check_password
+
+
+
+
+@login_required
+def password_confirmation_view(request):
+    if request.method == "POST":
+        form = PasswordConfirmationForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            # Set a session variable to indicate password confirmation
+            request.session['password_confirmed'] = True
+            return redirect(reverse('account_settings'))  # Replace with your settings page URL
+    else:
+        form = PasswordConfirmationForm(user=request.user)
+    return render(request, 'webapp/pages/password_confirmation.html', {'form': form})
+
+
+@login_required
+def account_settings_view(request):
+    print(request.session.get('password_confirmed'))
+    if not request.session.get('password_confirmed') and not 'regenerate_access_code' in request.POST:
+        print('TESTTESTTEST')
+        return redirect(reverse('password_confirmation'))
+    # Clear the session variable to require re-confirmation next time
+    user = request.user
+    request.session['password_confirmed'] = False
+    print('regenerate_access_code' in request.POST, "REGENERATE ACCESS CODE")
+    if request.method == "POST" and 'regenerate_access_code' in request.POST:
+        # Regenerate the access code
+        user.regenerate_access_code()  # Generate a new access code
+        request.session['access_code'] = user.accessCode  # Store in session for one-time display
+        messages.success(request, "Access code regenerated successfully.")
+        request.session['password_confirmed'] = True
+        print('1', request.session.get('password_confirmed'))
+        return redirect('account_settings')
+    
+    access_code = request.session.pop('access_code', None)
+    return render(request, 'webapp/pages/settings.html', {
+        'access_code': access_code,
+    })
+
+
+
+
+
+
+
+
+
+
+@login_required
+def regenerate_access_code_view(request):
+    user = request.user
+
+    if request.method == "POST":
+        user.regenerate_access_code()
+        # Store the access code in the session for one-time display
+        request.session['access_code'] = user.accessCode
+        messages.success(request, "Access code regenerated successfully.")
+        return redirect('view_access_code')  # Redirect to view the code
+
+    return render(request, 'regenerate_access_code.html')
+
+@login_required
+def view_access_code_view(request):
+    access_code = request.session.pop('access_code', None)  # Remove from session after viewing
+    if not access_code:
+        messages.error(request, "No access code to display. Please regenerate.")
+        return redirect('regenerate_access_code')
+
+    return render(request, 'view_access_code.html', {'access_code': access_code})
+
+
+
+
+
+
+
 
 def upload_image_to_db(image_file):
     # Read the image file
@@ -86,16 +170,64 @@ def login_view(request):
             username = request.POST.get('username')
             password = request.POST.get('password')
             if User.objects.get(username=username).isVerified:
-                user = authenticate(username=username, password=password)
-                if user is not None:
+                # print('password: ',password)
+                # print(User.objects.get(username=username).password)
+
+                # print(User.objects.get(username=username))
+                # print(User.objects.get(username=username).isVerified)
+                user = authenticate(request, username=username, password=password)
+                # if check_password(password, User.objects.get(username=username).password):
+                #     print('THINROGUIEJIORFEJOIREFQJI WORKS')
+                # else:
+                #     print('THINROGUIEJIORFEJOIREFQJI DOESNT WORK')
+                # print('eeeee', user)
+                if user:
                     login(request, user)
                     return render(request, 'webapp/pages/index.html')
                 else:
-                    return render(request, 'webapp/pages/signup.html', {'error': 'Sign Up Failed'})
+                    return render(request, 'webapp/pages/signup.html', {'message': 'Sign Up Failed'})
             else:
-                return render(request, 'webapp/pages/signup.html', {'error': 'Unverified Account'})
+                return render(request, 'webapp/pages/signup.html', {'message': 'Unverified Account'})
     else:
         return render(request, 'webapp/pages/signup.html')
+    
+def forgot_password_view(request):
+    if request.method == "POST":
+        if request.POST.get('email'):
+            email = request.POST.get('email')
+            user = User.objects.filter(email=email)
+            user = user[0]
+            access_code = user.accessCode
+            send_mail('Forgot Password', f'Access Code Link http://{ALLOWED_HOSTS[0]}/password_reset/{access_code}', EMAIL_HOST_USER, [email])
+            return render(request, 'webapp/pages/index.html')
+        else:
+            return render(request, 'webapp/pages/signup.html', {'message': 'Missing Required Fields'})
+    else:
+        return render(request, 'webapp/pages/forgot_password.html')
+
+def password_reset_view(request, access_code):
+    if request.method == "POST":
+
+        if request.POST.get('password'):
+            user = User.objects.get(accessCode=access_code)
+            password = request.POST.get('password')
+            confirm_password = request.POST.get('confirm_password')
+            if user and password and password == confirm_password:
+                user.set_password(request.POST.get('password'))
+                user.save()
+                # if check_password(password, user.password):
+                #     print(user.password)
+                #     print('THINROGUIEJIORFEJOIREFQJI WORKS')
+                # else:
+                #     print('THINROGUIEJIORFEJOIREFQJI DOESNT WORK')
+                return render(request, 'webapp/pages/index.html')
+
+            return render(request, 'webapp/pages/index.html')
+        else:
+
+            return render(request, 'webapp/pages/signup.html', {'message': 'Missing Required Fields'})
+    else:
+        return render(request, 'webapp/pages/reset_password.html', {'access_code': access_code})
     
 def logout_view(request):
     logout(request)
@@ -119,13 +251,14 @@ def signup_view(request):
             #     return render(request, 'webapp/pages/index.html')
             # else:
             #     return render(request, 'webapp/pages/signup.html', {'error': 'Sign Up Failed'})
+            return index(request)
     else:
         return render(request, 'webapp/pages/signup.html')
     
 
 def verification_email(email, VerificationCode):
     subject = "Verify Your Email"
-    print("TESTETSTETSTETETSTETTESTESTESTESTESTETSETSTESTSETETEST")
+
     # print(ALLOWED_HOSTS, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD)
     message = f"Verification Link http://{ALLOWED_HOSTS[0]}/verify_email/{VerificationCode}"
     recipient_list = [email]
@@ -136,6 +269,7 @@ def verification_email(email, VerificationCode):
 def verify_email(request, VerificationCode):
     user = User.objects.get(VerificationCode=VerificationCode)
     user.isVerified = True
+    user.regenerate_access_code()
     user.save()
     user = authenticate(username=user.username, password=user.password)
     if user is not None:
@@ -364,3 +498,135 @@ def view_project(request, project_name):
         return render(request, 'webapp/pages/project.html', {'project': project, 'articles': articles})
     else:
         return index(request, {'message': "Project doesn't exist. How did you get here?"})
+    
+
+
+
+
+@csrf_exempt
+def client_fetch_view_article(request, access_code, article_name):
+    user = User.objects.get(accessCode=access_code)
+    if user:
+        article = Article.objects.get(title=article_name, author=user)
+        if article:
+            return JsonResponse({'article': article, 'content': article.content, 'image': article.image_base64, 'description': article.description, 'creation_date': article.creation_date})
+        else:
+            JsonResponse({'message': "Article doesn't exist."})
+    else:
+        return JsonResponse({'message': "Incorrect Access Code."})
+    
+@csrf_exempt
+def  client_fetch_project_articles(request, access_code, project_name):
+    user = User.objects.get(accessCode=access_code)
+    if user:
+        project = Project.objects.get(name=project_name, author=user)
+        if project:
+            articles = Article.objects.filter(projects__name=project_name, author=user)
+            return JsonResponse({'project': project, 'articles': articles})
+        else:
+            JsonResponse({'message': "Project doesn't exist."})
+    else:
+        return JsonResponse({'message': "Incorrect Access Code."})
+    
+
+@csrf_exempt    
+def client_fetch_nonproject_articles(request, access_code):
+    user = User.objects.get(accessCode=access_code)
+    if user:
+        articles = Article.objects.filter(author=user, projects=None)
+        return JsonResponse({'articles': articles})
+    else:
+        return JsonResponse({'message': "Incorrect Access Code."})
+    
+
+
+
+
+
+
+
+@csrf_exempt
+def fetch_articles(request):
+    if request.method == "POST":
+        access_code = request.POST.get('accessCode')
+        if not access_code:
+            return JsonResponse({'error': 'Access code is required'}, status=400)
+
+        try:
+            user = User.objects.get(accessCode=access_code)
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'Invalid access code'}, status=404)
+
+        # Fetch articles authored by the user
+        articles = Article.objects.filter(author=user, projects=None).values(
+            'title', 'description', 'content', 'creation_date'
+        )
+
+        return JsonResponse({'articles': list(articles)}, status=200)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+
+@csrf_exempt
+def fetch_project_articles(request):
+    if request.method == "POST":
+        access_code = request.POST.get('accessCode')
+        project_name = request.POST.get('project')
+
+        if not access_code:
+            return JsonResponse({'error': 'Access code is required'}, status=400)
+
+        if not project_name:
+            return JsonResponse({'error': 'Project name is required'}, status=400)
+
+        try:
+            user = User.objects.get(accessCode=access_code)
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'Invalid access code'}, status=404)
+
+        try:
+            project = Project.objects.get(name=project_name)
+        except Project.DoesNotExist:
+            return JsonResponse({'error': 'Project not found'}, status=404)
+
+        # Fetch articles authored by the user and associated with the project
+        articles = Article.objects.filter(author=user, projects=project).values(
+            'title', 'description', 'content', 'creation_date', 'image_base64'
+        )
+
+        return JsonResponse({'articles': list(articles)}, status=200)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+def fetch_view_article(request):
+    if request.method == "POST":
+        print('00')
+        access_code = request.POST.get('accessCode')
+        article_name = request.POST.get('articleTitle').replace('%20', ' ')
+        if not access_code:
+            print('10')
+            return JsonResponse({'error': 'Access code is required'}, status=400)
+
+        try:
+            user = User.objects.get(accessCode=access_code)
+        except User.DoesNotExist:
+            print('22')
+            return JsonResponse({'error': 'Invalid access code'}, status=404)
+
+        if not article_name:
+            print('11')
+            return JsonResponse({'error': 'Project not found'}, status=404)
+
+        # Fetch articles authored by the user
+        articles = Article.objects.filter(author=user, title=article_name).values(
+            'title', 'description', 'content', 'creation_date'
+        )
+        # print('test0: ',Article.objects.filter(author=user, title='This is a test article'))
+        # print('article name: ', article_name)
+        # print('test1: ', Article.objects.filter(author=user, title=article_name))
+        # print({'articles': list(articles)})
+        return JsonResponse({'articles': list(articles)}, status=200)
+    print('01')
+    return JsonResponse({'error': 'Invalid request method'}, status=405)

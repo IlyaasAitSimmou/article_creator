@@ -1,11 +1,17 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils.crypto import get_random_string
 
 
 class User(AbstractUser):
     isVerified = models.BooleanField(default=False)
     VerificationCode = models.CharField(max_length=255, default="")
-    pass
+    accessCode = models.CharField(max_length=255, default="", blank=True)
+    
+    def regenerate_access_code(self):
+        """Generate a new random access code."""
+        self.accessCode = get_random_string(length=50)  # Adjust length as needed
+        self.save()
 
 class Project(models.Model):
     name = models.CharField(max_length=255)
