@@ -15,7 +15,7 @@ class User(AbstractUser):
 
 class Project(models.Model):
     name = models.CharField(max_length=255)
-    image = models.ImageField(upload_to='images/', blank=True)
+    # image = models.ImageField(upload_to='images/', blank=True)
     description = models.TextField()
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     projectSubThemes = models.JSONField(default=list, blank=True)
@@ -26,8 +26,8 @@ class Project(models.Model):
 
 class Article(models.Model):
     title = models.CharField(max_length=255)
-    Image = models.ImageField(upload_to='images/', blank=True)
-    File = models.FileField(upload_to='pdfs/')
+    # Image = models.ImageField(upload_to='images/', blank=True)
+    # File = models.FileField(upload_to='pdfs/')
     content = models.TextField()
     description = models.TextField(blank=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)

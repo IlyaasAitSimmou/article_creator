@@ -331,11 +331,10 @@ def create_article(request):
             print('PROJECTS::::::::::::::::::::::::: ', projects)
             
             if image:
-                article = Article.objects.create(title=title, File=html_file, Image=image, content=html_content, author=author, description=description, image_base64=base64_image)
+                article = Article.objects.create(title=title, content=html_content, author=author, description=description, image_base64=base64_image)
             elif not image:
-                article = Article.objects.create(title=title, File=html_file, content=html_content, author=author, description=description)
+                article = Article.objects.create(title=title, content=html_content, author=author, description=description)
             article.projects.set(projects)
-            print(article.Image)
             print(article.projects.all())
             print(article)
             return redirect(f"view_article", article_name=article.title)
@@ -378,12 +377,12 @@ def edit_article(request, article_name):
             print("IMAGE: ", request.POST.get('keep_image'))
             if request.POST.get('keep_image') == "Yes":
                 if image:
-                    article.Image = image
+                    # article.Image = image
                     article.image_base64 = upload_image_to_db(image)
             elif request.POST.get('keep_image') == "No":
-                print("UI355HTRGELGERUWIGHERIFRHEUQOIHFREQUWHFRUQIEIRFQUWHRQIOEWHFRIQUWQUIEWFUIHWFEU")
-                print("NO IMAGE:")
-                article.Image = None
+                # print("UI355HTRGELGERUWIGHERIFRHEUQOIHFREQUWHFRUQIEIRFQUWHRQIOEWHFRIQUWQUIEWFUIHWFEU")
+                # print("NO IMAGE:")
+                # article.Image = None
                 article.image_base64 = None
 
             if article.author == author:
@@ -441,7 +440,7 @@ def create_project(request):
             sub_themes = str(request.POST.get('themes')).split(',')
             if not sub_themes:
                 sub_themes = []
-            project = Project.objects.create(name=name, description=description, author=author, image=image, projectSubThemes=sub_themes, image_base64=base64_image)
+            project = Project.objects.create(name=name, description=description, author=author, projectSubThemes=sub_themes, image_base64=base64_image)
             return index(request)
         else:
             return render(request, 'webapp/pages/index.html', {'message': "Missing Required Fields"})
@@ -458,10 +457,8 @@ def edit_project(request, project_name):
             image = request.FILES.get('image')
             if request.FILES.get('keep_image') == "Yes":
                 if image:
-                    project.image = image
                     project.image_base64 = upload_image_to_db(image)
             elif request.FILES.get('keep_image') == "No":
-                project.image = None
                 project.image_base64 = None
             sub_themes = str(request.POST.get('themes')).split(',')
             if not sub_themes:
