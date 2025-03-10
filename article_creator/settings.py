@@ -33,6 +33,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 DEBUG = True
 DEBUG_PROPAGATE_EXCEPTIONS = True
 
+# TEST_HOST = os.environ.get("TEST_HOST")
 ALLOWED_HOSTS = ['127.0.0.1:8000', '.vercel.app', '127.0.0.1', "0.0.0.0"]
 
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'

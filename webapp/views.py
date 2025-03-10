@@ -556,7 +556,7 @@ def fetch_articles(request):
 
         # Fetch articles authored by the user
         articles = Article.objects.filter(author=user, projects=None).values(
-            'title', 'description', 'content', 'creation_date'
+            'title', 'description', 'content', 'creation_date', 'image_base64'
         )
 
         return JsonResponse({'articles': list(articles)}, status=200)
