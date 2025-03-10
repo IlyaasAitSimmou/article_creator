@@ -33,7 +33,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 DEBUG = True
 DEBUG_PROPAGATE_EXCEPTIONS = True
 
-ALLOWED_HOSTS = ['192.168.2.66:8000','192.168.2.66','127.0.0.1:8000', '.vercel.app', '127.0.0.1', "0.0.0.0"]
+ALLOWED_HOSTS = ['127.0.0.1:8000', '.vercel.app', '127.0.0.1', "0.0.0.0"]
 
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
