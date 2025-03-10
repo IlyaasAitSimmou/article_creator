@@ -1,0 +1,53 @@
+{% extends "webapp/layout.html" %}
+{% load static %}
+
+{% block script %}
+<script src="{% static 'auth.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+
+    {% if user.is_authenticated %}
+        <h1>Settings</h1>
+        <form method="post">
+            {% csrf_token %}
+            <label for="username">Username:</label>
+            <input type="text" name="username" value="{{ user.username }}" required>
+            <label for="email">Email:</label>
+            <input type="email" name="email" value="{{ user.email }}" required>
+            <label for="password">Password:</label>
+            <input type="password" name="password" value="{{ user.password }}" required>
+        </form>
+
+        {% if access_code %}
+            <div>
+            <p><strong>Your Access Code:</strong> {{ access_code }}</p>
+            <p>Note: This code will not be displayed again. Please save it securely.</p>
+            <p>Instructions: This access code will allow you to fetch, create, edit, delete, and display article and projects in your own web application
+            Add the access code to your dotenv for your web app and then then send fetches via the following links:
+            http://127.0.0.1:8000/client_fetch_view_article/{access_code} - method GET
+
+            http://127.0.0.1:8000/client_fetch_project_articles/{access_code} - method GET
+            http://127.0.0.1:8000/client_fetch_nonproject_articles/{access_code} - method GET
+            </p>
+            </div>
+        {% endif %}
+
+        <!-- Regenerate access code form -->
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" name="regenerate_access_code">Regenerate Access Code</button>
+        </form>
+
+    {% else %}
+        <h1>Settings</h1>
+        <p>You must be logged in to view this page.</p>
+    {% endif %}
+
+    {% if message %}
+        <div>{{ message }}</div>
+    {% endif %}
+
+{% endblock %}
+
+<!-- href="% url 'login' %"    href="% url 'signup' %"-->
